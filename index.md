@@ -5,4 +5,21 @@
 layout: default
 ---
 
-Hello world
+# [](#person)Person
+
+Programmer with passion for C++, Python and everything thats
+interesting ;)
+
+
+# [](#current-work)Current Work and Interests
+
+clang-tidy
+
+# [](#education)Education
+
+- B.Sc. in Applied Computer Science TU Bergakademie Freiberg
+  - Bachelorthesis "Calibration of omnidirectional multicamera systems"
+  - Work at ntfd for Prof. Hasse, Numerical Simulation of Combustion Processes
+  - Work at MiningRox, developing miningrobots
+  - Studentjob at 599media, webdevelopment
+- Abitur Saxony, Germany
