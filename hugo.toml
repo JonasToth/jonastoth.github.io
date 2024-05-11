@@ -1,0 +1,47 @@
+baseURL = 'https://jonastoth.github.io/'
+languageCode = 'en-us'
+title = 'Jonas Toth'
+theme = 'gokarna'
+enableRobotsTXT = true
+
+[menu]
+  # "weight" defines the ordering in the menu
+  [[menu.main]]
+    identifier = "github"
+    url = "https://github.com/JonasToth"
+    pre = "<span data-feather='github'></span>"
+    name = "Github"
+    weight = 1
+    [menu.main.params]
+        newPage = true
+
+  [[menu.main]]
+    # Unique identifier for a menu item
+    identifier = "about"
+    url = "/about/"
+    pre = "<span data-feather='user'></span>"
+    name = "About"
+    weight = 2
+
+  [[menu.main]]
+    # Unique identifier for a menu item
+    identifier = "publications"
+    url = "/publications/"
+    pre = "<span data-feather='file-text'></span>"
+    name = "Publications"
+    weight = 3
+    
+[params]
+    description = "Code & More"
+    footer = "All Rights Reserved"
+    showPostsOnHomePage = "popular"
+    socialIcons = [
+      {name = "github", url = "https://example.com"},
+      {name = "linkedin", url = "https://example.com"},
+    ]
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
