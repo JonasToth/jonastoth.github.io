@@ -36,9 +36,10 @@ enableRobotsTXT = true
     footer = "All Rights Reserved"
     showPostsOnHomePage = "popular"
     socialIcons = [
-      {name = "github", url = "https://example.com"},
-      {name = "linkedin", url = "https://example.com"},
+      {name = "github", url = "https://github.com/JonasToth"},
+      {name = "linkedin", url = "https://www.linkedin.com/in/jonas-toth-a4449a16b/"},
     ]
+    accentColor = "#08F"
 
 [markup]
   [markup.goldmark]

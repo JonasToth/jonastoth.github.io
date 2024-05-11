@@ -5,7 +5,7 @@ type = 'page'
 +++
 
 My name is Jonas Toth and I am a german software developer living in Leipzig.
-Natural science and computer science spark my curiosity the most.
+Physics and computer science spark my curiosity most.
 
 <table>
     <thead>
