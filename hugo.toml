@@ -30,12 +30,18 @@ enableRobotsTXT = true
     pre = "<span data-feather='file-text'></span>"
     name = "Publications"
     weight = 3
+  [[menu.main]]
+    identifier = "curiositas"
+    url = "https://curiositasbooks.gumroad.com/"
+    pre = "<span data-feather='book'></span>"
+    name = "Curiositas"
+    weight = 4
     
 [params]
-    description = "Code & More"
     footer = "All Rights Reserved"
     showPostsOnHomePage = "popular"
     socialIcons = [
+      {name = "buymeacoffee", url = "https://curiositasbooks.gumroad.com/"},
       {name = "github", url = "https://github.com/JonasToth"},
       {name = "linkedin", url = "https://www.linkedin.com/in/jonas-toth-a4449a16b/"},
     ]
