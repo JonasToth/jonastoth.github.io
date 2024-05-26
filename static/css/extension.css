@@ -1,3 +1,7 @@
+.small-td {
+    padding: 0px;
+}
+
 .cv-entry {
     vertical-align: middle !important;
     text-align: center;

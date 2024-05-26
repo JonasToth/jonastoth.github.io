@@ -9,13 +9,13 @@ Physics and computer science spark my curiosity most.
 <table>
     <thead>
     <tr>
-        <th></th>
+        <th class="small-td"></th>
         <th>Technical Skills</th>
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td class="cv-entry"><span>C++</span></td>
+        <td class="small-td cv-entry"><span>C++</span></td>
         <td>
         <ul>
             <li>Advanced modern C++ & following standardization efforts</li>
@@ -26,7 +26,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Linux</span></td>
+        <td class="small-td cv-entry"><span>Linux</span></td>
         <td>
         <ul>
             <li>Advanced Linux user with experience in multiple distributions</li>
@@ -37,7 +37,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Containers</span><span>K8s</span></td>
+        <td class="small-td cv-entry"><span>Containers</span><span>K8s</span></td>
         <td>
         <ul>
             <li>Creation and usage of container images for services</li>
@@ -48,7 +48,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Python</span></td>
+        <td class="small-td cv-entry"><span>Python</span></td>
         <td>
         <ul>
             <li>Automation and scripting for general tasks</li>
@@ -58,7 +58,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Misc</span></td>
+        <td class="small-td cv-entry"><span>Misc</span></td>
         <td>
         <ul>
             <li>Rust and Go experimentation</li>
@@ -69,13 +69,13 @@ Physics and computer science spark my curiosity most.
     </tbody>
     <thead>
     <tr>
-        <th></th>
+        <th class="small-td"></th>
         <th>Career</th>
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td class="cv-entry"><span>now</span><br /><span>- 01.2024</span></td>
+        <td class="small-td cv-entry"><span>now</span><br /><span>- 01.2024</span></td>
         <td>
             <b>IVU Traffic Technologies AG</b>
             <ul>
@@ -86,7 +86,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>&nbsp;&nbsp;12.2023</span><span>- 10.2020</span></td>
+        <td class="small-td cv-entry"><span>&nbsp;&nbsp;12.2023</span><span>- 10.2020</span></td>
         <td>
             <b>Energy2market GmbH</b>
             <ul>
@@ -97,7 +97,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>&nbsp;&nbsp;10.2020</span><span>- 09.2013</span></td>
+        <td class="small-td cv-entry"><span>&nbsp;&nbsp;10.2020</span><span>- 09.2013</span></td>
         <td>
             <b>Bachelor & Master of Science in Applied Computer Science</b>
             <ul>
@@ -110,13 +110,13 @@ Physics and computer science spark my curiosity most.
     </tbody>
     <thead>
     <tr>
-        <th></th>
+        <th class="small-td"></th>
         <th>Hobbies</th>
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td class="cv-entry"><span>Sport</span></td>
+        <td class="small-td cv-entry"><span>Sport</span></td>
         <td>
         <ul>
             <li>Cycling with my gravelbike</li>
@@ -125,7 +125,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Tech</span></td>
+        <td class="small-td cv-entry"><span>Tech</span></td>
         <td>
         <ul>
             <li>Managing my own gentoo linux installation</li>
