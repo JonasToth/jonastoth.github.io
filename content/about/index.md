@@ -1,6 +1,5 @@
 +++
 title = 'About'
-date = 2024-05-11T14:30:00+02:00
 type = 'page'
 +++
 
@@ -38,11 +37,11 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Containers & K8s</span></td>
+        <td class="cv-entry"><span>Containers</span><span>K8s</span></td>
         <td>
         <ul>
             <li>Creation and usage of container images for services</li>
-            <li>Deployment and operations of services in <code>K8s</code> cluster</li>
+            <li>Deployment and operations of services in K8s cluster</li>
             <li>CI/CD integration of custom toolchains</li>
             <li>Monitoring & Observability with Grafana, Loki and custom dashboards</li>
         </ul>
@@ -59,7 +58,7 @@ Physics and computer science spark my curiosity most.
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>Miscellaneous</span></td>
+        <td class="cv-entry"><span>Misc</span></td>
         <td>
         <ul>
             <li>Rust and Go experimentation</li>
@@ -76,29 +75,35 @@ Physics and computer science spark my curiosity most.
     </thead>
     <tbody>
     <tr>
-        <td class="cv-entry"><span>now - 01.2024</span></td>
+        <td class="cv-entry"><span>now</span><br /><span>- 01.2024</span></td>
         <td>
             <b>IVU Traffic Technologies AG</b>
             <ul>
-                <li></li>
+                <li>Implementation of automatic depot management funcitonality for bus and train companies</li>
+                <li>Integration of charge scheduling for electric buses</li>
+                <li>Enablement of linux & containerization for backend components</li>
             </ul>
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>12.2023 - 10.2020</span></td>
+        <td class="cv-entry"><span>&nbsp;&nbsp;12.2023</span><span>- 10.2020</span></td>
         <td>
             <b>Energy2market GmbH</b>
             <ul>
-                <li></li>
+                <li>Development of connection and control software for decentralized & renewable electricity</li>
+                <li>Operations of IIoT environment, both edge and backend services</li>
+                <li>Quality and Velocity improvements to software development cycles</li>
             </ul>
         </td>
     </tr>
     <tr>
-        <td class="cv-entry"><span>10.2020 - 09.2013</span></td>
+        <td class="cv-entry"><span>&nbsp;&nbsp;10.2020</span><span>- 09.2013</span></td>
         <td>
             <b>Bachelor & Master of Science in Applied Computer Science</b>
             <ul>
-                <li></li>
+                <li>Master thesis: <a target="_blank" href="https://github.com/JonasToth/depth-conversions">Post-Processing of Depth Images and Laser Scan Data for Feature-based Pose Estimation</a>
+                <li>Specialization in energy technology and robotics & computer vision</li>
+                <li>Multiple positions as research assistant in computational fluid dynamics & robotics and computer vision
             </ul>
         </td>
     </tr>
