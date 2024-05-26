@@ -1,0 +1,16 @@
+.cv-entry {
+    vertical-align: middle !important;
+    text-align: center;
+}
+.cv-entry span {
+    background: var(--accent-color);
+    display: inline-block;
+    padding: .25em .4em;
+    font-size: 75%;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25rem;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+}

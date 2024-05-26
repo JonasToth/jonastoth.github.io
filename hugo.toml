@@ -46,6 +46,9 @@ enableRobotsTXT = true
       {name = "linkedin", url = "https://www.linkedin.com/in/jonas-toth-a4449a16b/"},
     ]
     accentColor = "#08F"
+    customHeadHTML = '''
+    <link rel="stylesheet" type="text/css" href="/css/extension.css">
+    '''
 
 [markup]
   [markup.goldmark]
