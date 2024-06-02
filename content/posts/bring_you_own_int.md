@@ -10,7 +10,7 @@ weight = 1
 <p class="book-button">
     <a target="_blank" href="https://curiositasbooks.gumroad.com/l/build-your-own-int">Get the Book</a>
 </p>
-Computers are omnipresent and ubiquitous devices performing all kinds of tasks, based on the information if electrical current is present or not.
+Computers are omnipresent and ubiquitous devices performing all kinds of tasks, based on the information if electrical charge is present or not.
 How is that possible?
 
 This book gives you the practical proof of how the simple `0`s and `1`s our computers use turn into computation.
