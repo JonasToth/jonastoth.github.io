@@ -18,8 +18,8 @@ You are seeing how natural numbers are formed from bits, compared and calculated
 It shows you, that the difference between naive and efficient multiplication is not slow vs fast, but uncomputable vs instant.
 
 Code your own integer type by using the [<span data-feather='github'></span>Template Repository on github.com](https://github.com/curiositas-books/bring-your-own-int) and learn the most fundamental aspect of computing.
-The template already provides a functional CI, a compiling skeleton for all necessary files and the corresponding full implementation from the book.
-The project provides a fully tested, clean and documented code base including example programs that utilize the implemented `BigUInt` type.
+The template already provides a functional CI, a compiling skeleton for all necessary files and the corresponding reference implementation from the book.
+This reference implementation provides a fully tested, clean and documented code base including example programs that utilize the implemented `BigUInt` type.
 
 ## Target Audience
 
