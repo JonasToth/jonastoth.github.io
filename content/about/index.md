@@ -4,7 +4,6 @@ type = 'page'
 +++
 
 My name is Jonas Toth and I am a german software developer living in Leipzig.
-Physics and computer science spark my curiosity most.
 
 <table>
     <thead>
@@ -22,6 +21,7 @@ Physics and computer science spark my curiosity most.
             <li>Development and operations for distributed IIoT assets</li>
             <li>Parallelism and concurrency of C++ code</li>
             <li>Tooling and build processes</li>
+            <li>Developing <code>clang-tidy</code> based static analysis and refactoring checks</li>
         </ul>
         </td>
     </tr>
@@ -31,7 +31,7 @@ Physics and computer science spark my curiosity most.
         <ul>
             <li>Advanced Linux user with experience in multiple distributions</li>
             <li>Automation of tasks and scripting with <code>bash</code> and <code>Ansible</code></li>
-            <li>Experience with building distros with Gentoo Linux, Linux from Scratch and extensive custom compilation of Software</li>
+            <li>Experience with building distros with <code>Gentoo Linux</code>, <code>Linux from Scratch</code> and extensive custom compilation of Software</li>
             <li>Administration of VMs and services, including hardening</li>
         </ul>
         </td>
@@ -41,9 +41,9 @@ Physics and computer science spark my curiosity most.
         <td>
         <ul>
             <li>Creation and usage of container images for services</li>
-            <li>Deployment and operations of services in K8s cluster</li>
+            <li>Deployment and operations of services in <code>K8s</code> cluster</li>
             <li>CI/CD integration of custom toolchains</li>
-            <li>Monitoring & Observability with Grafana, Loki and custom dashboards</li>
+            <li>Monitoring & Observability with <code>Grafana</code>, <code>Loki</code> and custom dashboards</li>
         </ul>
         </td>
     </tr>
@@ -53,7 +53,7 @@ Physics and computer science spark my curiosity most.
         <ul>
             <li>Automation and scripting for general tasks</li>
             <li>Computer vision and AI application code</li>
-            <li>django web development</li>
+            <li><code>django</code> web development</li>
         </ul>
         </td>
     </tr>
@@ -61,7 +61,7 @@ Physics and computer science spark my curiosity most.
         <td class="small-td cv-entry"><span>Misc</span></td>
         <td>
         <ul>
-            <li>Rust and Go experimentation</li>
+            <li><code>Rust</code> and <code>Go</code> experimentation</li>
             <li>2D and 3D graphics editing (Gimp, Inkscape, Blender)</li>
         </ul>
         </td>
@@ -81,7 +81,7 @@ Physics and computer science spark my curiosity most.
             <ul>
                 <li>Implementation of automatic depot management funcitonality for bus and train companies</li>
                 <li>Integration of charge scheduling for electric buses</li>
-                <li>Enablement of linux & containerization for backend components</li>
+                <li>Enablement of Linux & containerization for backend components</li>
             </ul>
         </td>
     </tr>
@@ -103,7 +103,8 @@ Physics and computer science spark my curiosity most.
             <ul>
                 <li>Master thesis: <a target="_blank" href="https://github.com/JonasToth/depth-conversions">Post-Processing of Depth Images and Laser Scan Data for Feature-based Pose Estimation</a>
                 <li>Specialization in energy technology and robotics & computer vision</li>
-                <li>Multiple positions as research assistant in computational fluid dynamics & robotics and computer vision
+                <li>Multiple positions as research assistant in computational fluid dynamics & robotics and computer vision</li>
+                <li>CERN summer student 2018</li>
             </ul>
         </td>
     </tr>
@@ -128,7 +129,7 @@ Physics and computer science spark my curiosity most.
         <td class="small-td cv-entry"><span>Tech</span></td>
         <td>
         <ul>
-            <li>Managing my own gentoo linux installation</li>
+            <li>Managing my own gentoo Linux installation</li>
             <li>Contributions to open source software including <code>clang-tidy</code></li>
             <li>Cosplay as sysadmin in my home lab</li>
             <li>Playing around with custom optimized builds of software and toolchains</li>
