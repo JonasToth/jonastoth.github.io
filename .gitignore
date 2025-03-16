@@ -4,3 +4,4 @@ _site
 *.swp
 *.swo
 .hugo_build.lock
+public/
