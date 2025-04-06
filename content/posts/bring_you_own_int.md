@@ -3,7 +3,7 @@ title = "Curiositas - Bring Your Own Int"
 description = "A book explaining how to implement a custom type representing natural numbers and performing efficient arithmetic with them."
 date = 2024-05-11T14:30:00+02:00
 type = 'post'
-tags = ["curiositas", "numbers", "math"]
+tags = ["curiositas", "numbers", "math", "cpp"]
 showTableOfContents = false
 weight = 1
 +++
