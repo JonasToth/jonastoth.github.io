@@ -292,7 +292,7 @@ There are way more tricks to reduce binary size ([Blog Post on Teensy ELF Files]
 `nolibc` is interesting _educationally_ to understand and trace what essentials a program has to perform.
 I don't have a big use case for `nolib` and `musl` is the better default static linking library.
 For experimenting around at the lowest level, its the best option.
-My further self studying will be understanding more of the details of program loading ([What Happens before main()](#before-main), [How programs get run](#programs-run), [How programs get run: ELF binaries](#programs-elf), [Linkers and Loaders](#linkers-loaders)).
+It will be helpful to understand more details of program loading and linking ([What Happens before main()](#before-main), [How programs get run](#programs-run), [How programs get run: ELF binaries](#programs-elf), [Linkers and Loaders](#linkers-loaders)).
 
 ## References
 
