@@ -1,39 +1,40 @@
 +++
 title = "Better Build Throughput via Debug Fission"
-description = "Debug Fission splits debug information of ELF files into separate debug files that can be handled independently. This improves build throughput and allows leaner binary distribution."
-date = 2025-06-12T12:00:00+02:00
+description = "Debug Fission splits debug information of ELF files into separate debug files that can be handled independently. This improves build throughput and enables leaner binary distribution."
+date = 2025-06-12T23:00:00+02:00
 type = 'post'
 tags = ["cpp", "build-tooling", "mold", "debugging", "debug-fission", "split-dwarf"]
 draft = false
 showTableOfContents = true
 +++
 
-Programs are read from executable files.
-These files contain either a directly executable program or contain library code that is used by one or more executables and shared across the system.
-Exectuable files in Linux are written in the [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) -- ELF from now on -- containing metadata, dependency information, executable code and optionally additional useful information.
-The additional useful information may contain debug information, used by debuggers to cross reference executable code with human readable source code and is stored in the [DWARF](https://en.wikipedia.org/wiki/DWARF) format.
+Programs are loaded from executable files and then executed.
+These files contain either a program or library code that is used by one or more executables and is shared across the system.
+Exectuable files in Linux are written in the [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) -- ELF from now on -- containing metadata, dependency information, machine instructions and optionally additional useful information.
+One form of particularly useful additional information are debug symbols, used by debuggers to cross reference specific instructions with human readable source code and is stored in the [DWARF](https://en.wikipedia.org/wiki/DWARF) format.
 Debug information requires a high level of fidelity to properly relate to the original source code, leading to the situation that a significant portion of an ELF file might actually be debug information.
+Normal end users on the other hand have no use for debug information and the natural question becomes, can executable code and debug information handled separatly?
 
 ## Issues with Debug Information within the Executable
 
 The increased size of executable files leads to several drawbacks.
 Distributions and software repositories storing and serving the executable files have higher costs due to increased network bandwidth and disk usage requirements.
 Downloads take longer for end users.
-Especially in constrained environments like embedded devices and/or connectivity via mobile networks these down sides are significant.
-In case of proprietary software, distributing debug information leaks information about the internal source code, reducing the burden to reverse engineer a software product.
-All these drawbacks have little value if software is not debugged by the end user.
+Especially in constrained environments like embedded devices and/or connectivity via mobile networks are these down sides significant.
+In case of proprietary software, distributing debug information leaks interna of the source code, reducing the burden to reverse engineer a software product.
+All these aspects provide cost with no value to the end user.
 On the other hand, if there is a crash or issue, the software developers _need_ debug information just to locate the source code to inspect.
 
 Even during the development cycle of writing, compiling and then executing or debugging the program, the integrated debug information comes at a cost.
 For the compilation process to finish, the executable file needs to be fully written, causing increased wait times before the program can be started.
 
 Splitting debug information off of executables gives the best of both worlds: have debug information if needed but not needing to distribute and pay for it everywhere.
-This is more common in Windows environments but possible in Linux, too.
-The process of generating distinct debug files is sometimes called _debug fission_.
+This is culturally more common in Windows environments but equally possible in Linux, too.
+The process of generating distinct debug files is sometimes called _debug fission_ or _split dwarf_.
 
 ## Classical Split-Dwarf
 
-ELF files are separated into _sections_.
+ELF files are organized in _sections_ from the perspective of the linker and _segments_ from the perspective of the program loader.
 DWARF defines multiple section types that contain specific pieces of the debug information.
 These sections are present in the file but ignored by the program loader.
 Let's see this happening for an example build of [Waybar](https://github.com/Alexays/Waybar).
@@ -141,9 +142,9 @@ $ readelf --segments waybar
 >    11
 >    12     .init_array .fini_array .data.rel.ro .dynamic .got
 ```
-The "Section to Segment mapping" does not contain any of the debug sections and the segments define what is being loaded.
+The "Section to Segment mapping" does not contain any of the debug sections that are therefore not loaded during normal execution.
 
-"Split-Dwarf" splits the sections containing debug information into a separate ELF file which does not need executable code itself.
+"Debug Fission" splits the sections containing debug information into a separate ELF file which does not need executable code itself.
 A small `.gnu_debuglink` section in the executable file may point to the separate debug ELF file.
 
 #### Separating Debug Sections Into Their Own ELF File
@@ -164,7 +165,8 @@ $ objcopy --compress-debug-sections=zstd waybar.dbg
 $ objcopy --add-gnu-debuglink=waybar.dbg waybar
 $ ls -lh waybar{,.dbg}
 > -rwxr-xr-x 1 jonas jonas 3,1M waybar
-> -rwxr-xr-x 1 jonas jonas  71M waybar.dbg
+> -rwxr-xr-x 1 jonas jonas  71M waybar.dbg # Uncompressed
+> -rwxr-xr-x 1 jonas jonas  25M waybar.dbg # Compressed with zstd
 
 $ # Without compressed debug information:
 $ readelf --debug-dump=links waybar
@@ -230,22 +232,23 @@ $ ls -lh1 build/waybar.p/
 ```
 The created `.dwo` files are similar in size to the `.o` files.
 An incremental build now only changes the necessary files and the final linking can ignore the handling of debug information.
-The debugger will look for a matching `.dwo` file and read debug information from it if possible.
+Debuggers search a matching `.dwo` file and read debug information from it if found.
 
-All the "loose" `.dwo` files are not easy to distribute though.
+All the "loose" `.dwo` files are not easy to distribute and handle though.
 This is where the `dwp` (or `llvm-dwp`) tool comes in.
-It bundles all `.dwo` files into a `.dwp` ([DWARF Package File Format](https://gcc.gnu.org/wiki/DebugFissionDWP)) file, allowing similar handling to the `waybar.dbg` file.
+It bundles all `.dwo` files into a `.dwp` ([DWARF Package File Format](https://gcc.gnu.org/wiki/DebugFissionDWP)) file, yielding similar situation to the `waybar.dbg` file.
+Note that the resulting `.dwp` file is _not_ an ELF file.
 
 ## Improved Debug Fission with Mold
 
 [Mold](https://github.com/rui314/mold) entered the software development ecosystem with a splash.
 It is a modern linker with the project goal to provide better developer tooling.
-The linker is takes only twice the time of just copying the resulting executable with `cp`, proper benchmarks for comparison are provided in the project repository.
+The linker is takes only twice the time of just copying the resulting executable with `cp`, proper benchmarks for comparison are provided in the project repository -- `mold` links _very_ fast.
 
 Since version `2.33` the linker has the capability to write separate debug files during linking.
 Subsequent releases improved upon that and include directly compressing debug information (since 2.37) and adding a _GDB Index_ for faster load times of the debug information during debugging.
-Both features are availabe with `objcopy --compress-debug-sections` and `gdb-add-index <file>` through independent programs.
-But independent program invocations are harder to integrate into a build system and build process and tedious extra steps.
+Both features are availabe with `objcopy --compress-debug-sections` and `gdb-add-index <file>`.
+But independent program invocations are harder to integrate into a build system and process.
 The way `mold` handles debug information is like `objcopy --only-keep-debug` as described above, but nicer to use.
 
 Please note, that the option names in `mold` did change through the releases and the documented flags in the releases notes are not necessarily accurate anymore.
@@ -298,8 +301,7 @@ $ readelf --debug-dump=links waybar
 > 
 > section '.gnu_debuglink' has the NOBITS type - its contents are unreliable.
 ```
-Once the build is properly configured--adding the flags could be done in the build system itself instead of passing them from the outside--the final executable does not contain the debug information itself, but links to a separate `.dbg` file instead.
-The created debug information is much smaller in comparison due to the activated compression.
+Once the build is properly configured -- adding the flags could be done in the build system itself instead of passing them from the outside -- the final executable does not contain the debug information itself, but links to a separate `.dbg` file instead.
 
 The warning message of `readelf` can be ignored.
 In my experience, the debug information is properly connected and works with `gdb` and `lldb`.
@@ -308,27 +310,65 @@ This seems to be an oversight in `mold`.
 `mold`s approach is an improved version of splitting out debug information after the final build.
 It does not mix with the `-gsplit-dwarf` compilation.
 
-`mold` has the feature to finalize the executable ELF file before the corresponding `.dbg` file is fully written.
+Another goodie you get from using ` mold` is its ability to finalize the executable file before the corresponding `.dbg` file is fully written.
 The `meson`, `cmake`, `make`, `ninja` or whatever command that builds your program would already be finished and you can start the program directly.
-`mold` _detaches_ in the background and keeps running as a job to finalize the debug information providing the fastest possible development cycle.
+`mold` _detaches_ into the background and keeps running until the debug file is fully written, providing the fastest possible development cycle (controlled via `--detach`/`--no-detach`).
 
 **HOW?!**
 
 The `.gnu_debuglink` section must have been written already and this section includes the CRC checksum of the final `.dbg` file, but its not fully created yet.
 
-When `mold` is instructed to write a separate debug file, it [creates a CRC value](https://github.com/rui314/mold/blob/f556d2b4aef8736fd7078acf5ff3513d4324b8a4/src/passes.cc#L3305) that is both reproducible but different for different builds and writes this into the `.gnu_debuglink` section.
-The nature of CRC allows to _extend_ the input data with "garbage" to yield a desired CRC values.
+When `mold` is instructed to write a separate debug file, it [creates a CRC value](https://github.com/rui314/mold/blob/f556d2b4aef8736fd7078acf5ff3513d4324b8a4/src/passes.cc#L3305) that is both reproducible and distinguishes different programs and writes the CRC into the `.gnu_debuglink` section.
+The nature of CRC allows to _extend_ the input data with "garbage" to yield a desired CRC value.
 This is done via [CRC polynomial solving](https://github.com/rui314/mold/blob/f556d2b4aef8736fd7078acf5ff3513d4324b8a4/lib/crc32.cc#L12).
 The garbage values are append to the separate debug file resulting in the necessary CRC checksum.
 I found this _such a clever_ approach and was very surprised to find this in a linker.
 
 ## Distributing Debug Information
 
-- build-id is hash of executable code in the ELF file
-- build-id is the fingerprint of the executable and can be used to uniquely identify a build of an ELF file
-- opportunity to retrieve the matching debug information via this build-id
-- the separate debug information file is named with the build-id in `/usr/lib/debug/<XX>/<XXXXXXXXXX>.debug` for efficient retrieval by the debugger
-- allows `debuginfod` to hold the debug files and retrieve them over network
+The final aspect of debug fission is distribution and retrieval of the debug information once it becomes necessary or desirable.
+Debuggers have multiple heuristics to identify debug information, like looking next to a `.o` file for a `.dwo` file.
+These approachs don't scale well beyond a single developers machine.
+
+A better approach involves another neat piece of meta data optionally embedded in ELF files: the _build-ID_.
+The build-ID of an ELF file can be queried with `readelf` but may not be available.
+```bash
+$ readelf --display-section=.note.gnu.build-id waybar
+> Displaying notes found in: .note.gnu.build-id
+>   Owner                Data size        Description
+>   GNU                  0x00000020       NT_GNU_BUILD_ID (unique build ID bitstring)
+>     Build ID: c7780d7533763b59e06f0875378701a4237b5021e95d0735ce78fd14e7f431c6
+```
+To ensure a build-ID is generated with `mold` it is necessary to pass the option `--build-id=sha256` as additional linker flag.
+Using `ld` or `lld` requires `--build-id=sha1` instead.
+All linkers support `--build-id` but do not use the same algorithm and multiple algorithms are available in each linker.
+What all have in common is that an unique 128bit or bigger number is assigned to the build that can be used as identification, enabling a form of [content based addressing](https://en.wikipedia.org/wiki/Content-addressable_storage).
+In case of `sha1/sha256` the executable's code sections are hashed.
+Using a random UUID instead is possible but not reproducible.
+This ID is stable for the same executable even if other parts of the ELF file are changed retrospectively.
+Because the chosen number is _big_ there are no clashes between different executables, every distinct program that will ever exist has a different ID.
+
+Naming the separated `.dbg` files to a name that is derived from the build-ID makes the files manageable for distribution and retrieval.
+Installing a matching debug information file of an executable in Linux works by using the naming convention `/usr/lib/debug/.build-id/XX/YYYY.debug` with `XX` being the first two digits of the hash and `YYYY` the rest.
+In the example the `waybar.dbg` file should be moved to `/usr/lib/debug/.build-id/c7/780d7533763b59e06f0875378701a4237b5021e95d0735ce78fd14e7f431c6.debug`.
+The debugger can query the build ID of the executable or library and search for matching debug information files.
+Distributors can provide debug information independently and install or uninstall the files through classical packaging mechanisms.
+Linux distributions like [Fedora provide independent debuginfo packages](https://docs.fedoraproject.org/en-US/packaging-guidelines/Debuginfo/) through exactly this mechanism.
+A missing, not discussed in this post, piece is the handling of source code information.
+The approach is similar, the matching source files must be found based on the debug information.
+User/Developer specific file paths and/or incorrect versions of the files are the hurdles to take.
+The `gcc` option `-ffile-prefix-map`, the `gdb` option `set substitute-path` and their `clang` and `lldb` equivalents solve this issue.
+Analogous to debug info, the source files can be installed under `/usr/src/`.
+
+Finally, the debugger may query the debug information on demand from `debuginfod` or `llvm-debuginfod` utilizing the same principles as describes before.
+
+## Conclusion
+
+Splitting of debug information from executables is common practice under Windows and Linux.
+Doing so has advantages in the whole life cycle of a program.
+This post explained how to perform this separation using modern Linux build tools and how it works under the hood.
+Using `mold --separate-debug-file --compress-debug-sections=zstd --gdb-index --build-id=sha256` as linker invocation provides the most convenient way of doing so.
+If distribution of the separated debug files is necessary, additional scripting to rename the debug files, provide the source code and package the artifacts is required.
 
 ## References
 
@@ -340,3 +380,4 @@ I found this _such a clever_ approach and was very surprised to find this in a l
 - [GCC Wiki for the DWARF Package File Format](https://gcc.gnu.org/wiki/DebugFissionDWP)
 - [GCC Wiki for the DebugGNUIndex](https://gcc.gnu.org/wiki/DebugGNUIndexSection)
 - [Mold](https://github.com/rui314/mold)
+- [GDB Source Code Finding](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Source-Path.html)
