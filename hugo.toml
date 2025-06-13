@@ -4,6 +4,7 @@ title = 'Jonas Toth'
 theme = 'gokarna'
 enableRobotsTXT = true
 enableEmoji = true
+pygmentsStyle = "gruvbox"
 
 [menu]
   # "weight" defines the ordering in the menu
