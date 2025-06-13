@@ -4,7 +4,7 @@ description = "Building many libraries utilizing conan2 as package manager can l
 date = 2025-04-06T10:00:00+02:00
 type = 'post'
 tags = ["conan2", "cmake", "cpp", "build-tooling"]
-showTableOfContents = false
+showTableOfContents = true
 +++
 
 Do you know how programs become actually executable, in the sense of loading and running machine instructions, in Linux and how `CMake` ensures programs can be run from the build directory?
@@ -22,7 +22,7 @@ This leads to an extremely flexible approach to dependencies, build tooling and 
 As is tradition in C++, this flexibility comes with the price tag of "you got to know what you are doing" once things get more complex.
 So, why is `CMake` generation time bad in a `conan2` project with many shared object files?
 
-### TL;DR: What do I have to change in my CMake Build?
+## TL;DR: What do I have to change in my CMake Build?
 
 Globally set the following properties of your project in `CMake`:
 ```cmake
@@ -54,7 +54,7 @@ This was more complicated in the referenced project due to the project structure
 
 ---
 
-### Why are these changes so effective?
+## Why are these changes so effective?
 
 [CMAKE_BUILD_WITH_INSTALL_RPATH](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_WITH_INSTALL_RPATH.html) and [CMAKE_SKIP_RPATH](https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_RPATH.html#variable:CMAKE_SKIP_RPATH) control if `CMake` adds runtime loading information to binaries.
 The `RPATH` is a property of `ELF` files that contains paths that point to dependent shared object files.
@@ -83,7 +83,7 @@ The resulting file was too big to load into `chrome://tracing` and [perfetto.dev
 By manually inspecting the trace I got the impression, that the dynamic evaluation of each targets `RPATH` properties lead to the massive slowdown.
 It certainly creates noise and deep call stacks in the bits and pieces I could analyze.
 
-### Conclusion
+## Conclusion
 
 Noone is to blame for the bad performance and with some experience in defining builds under Linux the issue seems obvious.
 It still came as a surprise to me _how much_ impact the `RPATH` property has on generation time.
