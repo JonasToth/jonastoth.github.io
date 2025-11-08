@@ -37,12 +37,12 @@ My name is Jonas Toth and I am a german software developer living in Leipzig.
         </td>
     </tr>
     <tr>
-        <td class="small-td cv-entry"><span>Containers</span><span>K8s</span></td>
+        <td class="small-td cv-entry"><span>Containers</span><span>K8s</span><span>CI/CD</span></td>
         <td>
         <ul>
             <li>Creation and usage of container images for services</li>
             <li>Deployment and operations of services in <code>K8s</code> cluster</li>
-            <li>CI/CD integration of custom toolchains</li>
+            <li>CI/CD integration of custom toolchains (GitLab, Jenkins, ArgoCD, BuildBot)</li>
             <li>Monitoring & Observability with <code>Grafana</code>, <code>Loki</code> and custom dashboards</li>
         </ul>
         </td>
@@ -81,7 +81,9 @@ My name is Jonas Toth and I am a german software developer living in Leipzig.
             <ul>
                 <li>Implementation of automatic depot management funcitonality for bus and train companies</li>
                 <li>Integration of charge scheduling for electric buses</li>
-                <li>Enablement of Linux & containerization for backend components</li>
+                <li>Observability and monitoring for complex business processes</li>
+                <li>Enablement of Linux & containerization for backend components, including CI/CD into staging environments</li>
+                <li>C++ buildsystem modernization and migration to CMake</li>
             </ul>
         </td>
     </tr>
@@ -121,6 +123,7 @@ My name is Jonas Toth and I am a german software developer living in Leipzig.
         <td>
         <ul>
             <li>Cycling with my gravelbike</li>
+            <li>HEMA - historical fencing</li>
             <li>Flying quadcopters</li>
         </ul>
         </td>
