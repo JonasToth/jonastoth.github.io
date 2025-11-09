@@ -118,6 +118,18 @@ The required network traffic and therefore load on the repository hoster is redu
 
 Adding alternates manually requires adding the path to the `objects/` directory to either the file `.git/objects/info/alternates` or to the environment variable `GIT_ALTERNATE_OBJECT_DIRECTORIES`.
 
+## Working on Multiple Branches Simultaneously
+
+Another important aspect of developing on a large (mono)repo is the aspect on working on multiple branches at a time.
+Switching branches leads to recompilation and other annoying issues.
+Sometimes it is simply better to have the repository available in multiple directories and the desired branches per directory.
+Instead of cloning the repository multiple times, even if its an optimized clone, one should use `git-worktree` instead.
+
+Creating a worktree by hand is effectively adding a new clone with an `alternate` and reusing the objects from a different repository.
+The builtin command `git worktree add` is just way simpler.
+A second worktree knows the connection to the original repository and has better integration, so no there is no need to hack it together using the alternate mechanism.
+Using `scalar` for cloning will already prepare a workspace that is structured to manage multiple worktree ergonomically.
+
 ## Managing References
 
 The previous sections showed that content retrieval cost is strongly correlated with the amount of objects your repository holds -- who would have guessed that.
