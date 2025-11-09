@@ -15,14 +15,15 @@ Especially CI environments perform regular clones of a repository and benefit fr
 This post demonstrates various optimizations and measures the speedups with the example of [LLVM](https://github.com/llvm/llvm-project).
 The baseline of cloning `llvm` is several minutes, downloading `6GB` of compressed data.
 
-## TL;DR: Use `scalar` For Developer Clones
+## TL;DR: `scalar` For Developers
 
 The `git` package includes the [`git-scalar`](https://git-scm.com/docs/scalar) subcommand that is available as distinct exectuable `scalar` too.
 This command performs various setting adjustments useful for big repositories.
-Not all tricks described in this post are directly accessible, like history reduction.
+Not all tricks described in this post are directly accessible, e.g. history reduction, and various optimization make only sense in long lived repositories clones.
 It is still the easiest and fastest way to get a faster `git` repository for your development on a big (mono) repo.
+Automation jobs sometimes require more control and `scalar clone` may not be the best match.
 
-## Reducing The History Length
+## Reducing The History
 
 The most common reduction is to download only parts of the history, called a _shallow clone_.
 Reducing the history reduces the amount of data to be downloaded drastically.
@@ -49,7 +50,7 @@ For big repositories this is undesirable.
 The section about [Managing References](#managing-references) provides tips on how to find a middle ground.
 Increasing the history length is described in [its own section](#deepen-the-git-history)
 
-## Using Fetch Filters - Partial and Sparse Clones
+## Partial and Sparse Clones
 
 Another optimization available to `git` is to retrieve the actual objects only on demand.
 This is best combined with `git-sparse-checkout`, as most big repositories are monorepos and only fractions of it are actually necessary to retrieve for daily work.
@@ -118,7 +119,7 @@ The required network traffic and therefore load on the repository hoster is redu
 
 Adding alternates manually requires adding the path to the `objects/` directory to either the file `.git/objects/info/alternates` or to the environment variable `GIT_ALTERNATE_OBJECT_DIRECTORIES`.
 
-## Working on Multiple Branches Simultaneously
+## Using Worktrees
 
 Another important aspect of developing on a large (mono)repo is the aspect on working on multiple branches at a time.
 Switching branches leads to recompilation and other annoying issues.
@@ -193,15 +194,15 @@ fetch = +refs/heads/develop/R25/*:refs/remotes/origin/develop/R25/*
 ```
 It is possible to remap references, but this is not in scope of this blog post.
 
-## Deepen the Git History
+## Deepen the History
 
 Converting a repository to a full history is done with `git fetch --unshallow`.
 Extending the shallow history works either based on a commit count with `git fetch --deepen=1000` or via a time point with `git fetch --shallow-since=02.05.2025`.
 
-## General Speed Improvements for Large Repositories
+## General Speed Improvements
 
 The following quick notes provide pointers to look out for.
-- again, use `scalar`, it controls the right knobs
+- again, use `scalar`, it controls the right knobs out of the box
 - call `git maintenance start` on your repository
 - consider using `git config core.fsMonitor true` and `git config core.untrackedCache true`
 - have your repository on fast storage, at least SSD, maybe even NVME drives
