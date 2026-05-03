@@ -131,6 +131,7 @@ project("JTComputing" VERSION 0.1.0 LANGUAGES CXX)
 
 set (CMAKE_CXX_STANDARD 26)
 set (CMAKE_CXX_MODULE_STD ON)
+set (CMAKE_CXX_EXTENSIONS ON)
 set (CMAKE_CXX_SCAN_FOR_MODULES ON)
 ```
 Setting these properties can be done on a per-target basis, too.
@@ -139,14 +140,47 @@ function(jt_compile_setup target)
     set_target_properties(${target}
         PROPERTIES
             CMAKE_CXX_STANDARD cxx_std_26
+            CMAKE_CXX_EXTENSIONS ON
             CMAKE_CXX_MODULE_STD ON
             CMAKE_CXX_SCAN_FOR_MODULES ON
     )
 endfunction()
 ```
-From inspecting the generated build commands,
-it seems that `gcc` requires `GNU` extensions for the standard library module support,
-but I am not aware of the details.
+_Edited, see below for details_.
+Building with `set (CMAKE_CXX_EXTENSIONS OFF)` works fine with `gcc`.
+Doing the same with `clang` though leads to the following error:
+```
+FAILED: [code=1] CMakeFiles/JTComputing.dir/lib/math/Operations.cpp.o CMakeFiles/JTComputing.dir/jt.Math-Operations.pcm
+/usr/lib/llvm/22/bin/clang++-22  -I<DIR>/jt-computing/include -I<DIR>/jt-computing/lib \
+    -D_LIBCPP_ENABLE_EXPERIMENTAL=1 -g -std=c++26 -Wall -Wextra -W... -MD \
+    -MT CMakeFiles/JTComputing.dir/lib/math/Operations.cpp.o \
+    -MF CMakeFiles/JTComputing.dir/lib/math/Operations.cpp.o.d @CMakeFiles/JTComputing.dir/lib/math/Operations.cpp.o.modmap \
+    -o CMakeFiles/JTComputing.dir/lib/math/Operations.cpp.o -c <DIR>/jt-computing/lib/math/Operations.cpp
+error: GNU extensions was enabled in precompiled file 'CMakeFiles/__cmake_cxx26.dir/std.pcm' but is currently disabled
+error: precompiled file 'CMakeFiles/__cmake_cxx26.dir/std.pcm' cannot be loaded due to a configuration mismatch with the current compilation [-Wmodule-file-config-mismatch]
+<DIR>/jt-computing/lib/math/Operations.cpp:8:17: warning: using directive refers to implicitly-defined namespace 'std'
+    8 | using namespace std;
+      |                 ^
+
+```
+I am not aware how this mismatch of the C++ standard version occurs and I failed to find the root cause.
+The module dependency states that the `compiler-frontend-variant` is `GNU`.
+```bash
+➜  build_clang git:(master) ✗ rg "frontend"
+CMakeFiles/JTComputing.dir/CXXDependInfo.json
+3:      "compiler-frontend-variant" : "GNU",
+
+CMakeFiles/__cmake_cxx26.dir/CXXDependInfo.json
+3:      "compiler-frontend-variant" : "GNU",
+
+CMakeFiles/__cmake_cxx23.dir/CXXDependInfo.json
+3:      "compiler-frontend-variant" : "GNU",
+
+bin/CMakeFiles/collatz_chain.x.dir/CXXDependInfo.json
+3:      "compiler-frontend-variant" : "GNU",
+```
+Maybe the `.pcm` file is generated with `GNU` extensions because of that.
+For now, I keep the extensions activated to keep working with `gcc` and `clang`.
 
 The following code transformation introduced `import std;`:
 - Perform a project-wide string search for `#include <`, using [`telescope.nvim`](https://github.com/nvim-telescope/telescope.nvim).
@@ -322,10 +356,15 @@ TEST_CASE("BitVector Construction", "") {
 
 ### Convert to `using namespace std;` everywhere
 
-Once the code base is fully modularized it is possible to use `using namespace std;` everywhere and have it as a default.
+Once the code base is fully modularized it is possible to use `using namespace std;` (or other namespace you use often) by default.
 Because there is no textual header inclusion, the `using` directive doesn't bleed into other headers and implementations.
-Just add `using namespace std;` after each `import std;` or to other `using namespace ...;` sections already present.
-Then perform a textual replacement of `'std::' => ''` and fix compiler errors.
+The [CppCoreGuidelines Rule SF.7](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf7-dont-write-using-namespace-at-global-scope-in-a-header-file) exists for exactly that reason.
+
+1. Add `using namespace std;` after each `import std;` or to other `using namespace ...;` sections already present.
+1. Textual replacement of `'std::' => ''` and fixing of compiler errors, e.g. from introduced ambiguities.
+
+This change resonates with my personal preference to not write `std::vector<std::string>` _everywhere_ but qualify standard functionality only if necessary.
+It changes the look and feel of interface definitions and implementations, reduces "ceremony" for stating simple things and therefore improves the signal to noise ratio of the code.
 
 ## Using C++ Contracts
 
@@ -339,12 +378,12 @@ The following steps enabled contracts:
 - pass [`-fcontracts`](https://gcc.gnu.org/onlinedocs/gcc-16.1.0/gcc/C_002b_002b-Dialect-Options.html#index-fcontracts) and [`-fcontract-evaluation-semantic=enforce`](https://gcc.gnu.org/onlinedocs/gcc-16.1.0/gcc/C_002b_002b-Dialect-Options.html#index-fcontract-evaluation-semantic) to `gcc` through quick-and-dirty extension of the `target_compile_options()` and `target_link_options()` in `cmake`
 
 I expect future releases of `cmake` to expose the evaluation semantic through typical target properties and invoke the compiler correctly if `C++26` is the target standard.
-The assertion macros just pass through to the proper contracts keywords.
+The assertion macros just pass through to the proper contracts keywords. (_Edited, see below_)
 ```cpp
 // File: include/jt-computing/core/Contracts.hpp
 #pragma once
 
-#ifdef __clang__
+#ifndef __cpp_contracts
 #  define PRE(...)
 #  define POST(...)
 #  define CONTRACT_ASSERT(...)
@@ -433,12 +472,14 @@ $ measure 32 # 3 times
 | 32     | ~7.6s                   | 7.57 7.63 7.57 |
 |  8     | ~9.5s                   | 9.45 9.46 9.44 |
 
+_Edited, see below_.
 Sadly, the modules version performs slower clean builds.
 Happily I don't have a lot of time to increase the size of the project, so its fast to build anyway /s.
 
-In all seriousness, I am surprised to see the significant increase in compile time.
+In all seriousness, I am surprised to see such a significant increase in compile time.
 The build takes `35` steps more due to scanning for module definitions before acutal compilation happens.
-Maybe the regression is related to my decision of having the tests as part of the modules.
+Modularized compilation is not embarrassingly parallel anymore, as internal dependencies between module units must be resolved and require ordering of the build steps.
+The effect of having the tests be part of the module is particularly interesting to investigate.
 I want to revisit this point and see, if I can improve the build speed by adjusting my module structure.
 
 Measuring incremental builds may restore the module's honor, but I want to finish the blog post 😅.
@@ -467,3 +508,18 @@ Removing `std::` everywhere improved readability and is a welcome change to C++.
 I am looking forward to not remember header names and accidentally missing includes that lead to compiler errors after toolchain updates.
 
 Thank you for your effort to everyone involved in the continued evolution of C++ and its tools!
+
+## Updates
+
+I posted this article to [r/cpp](https://www.reddit.com/r/cpp/comments/1t2kkoh/migrating_a_small_c_code_base_to_c26_modules) and received valuable feedback.
+The changes to the original article are listed here:
+- Use `#ifndef __cpp_contracts` as the proper feature test macro for the contract macros (thanks to Jonathan Wakely)
+- `gcc` does not need standard extensions for module builds to work, _but_ `clang` does for some (probably cmake-related) reason.
+  This seems to be a bug I want to follow-up on (clarified by Jonathan Wakely).
+- Multiple comments gave more detailed explanations how the module dependencies impact the build speed (thanks to u/kamrann_, u/James20k and u/javascript).
+    - I was aware of this change in general, but was surprised it effected this small project negative.
+      The 2 second difference doesn't matter.
+      Just the percentage _feels_ bad -- which is why some things shouldn't be measured I guess 😂.
+      I find the encapsulation modules provide more important though.
+    - Logically, the reduced parallelism should hit harder for smaller projects. So this might be expected, but might be overblown by my bad modularization approach.
+- Provide a better explanation why `using namespace std;` is worthwhile _for me_ (thanks to u/Fit-Departure-8426).
