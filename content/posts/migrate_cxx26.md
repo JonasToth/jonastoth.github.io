@@ -1,33 +1,41 @@
 +++
 title = "Migrating a Toy Project to C++-26"
-description = "This is a short experience report about migrating my C++ toy project `jt-computing` to the latest C++26 features and tooling."
-date = 2026-04-02T10:00:00+02:00
+description = "C++26 is around, GCC-16 is released, lets see what the state of modules, contracts and the tooling ecosystem for C++ is right now."
+date = 2026-05-02T10:00:00+02:00
 type = 'post'
 tags = ["cpp", "cpp-26", "cmake", "build-tooling", "gcc", "gcc-16", "clang", "clang-22", "clangd", "clangd-22"]
 showTableOfContents = true
 +++
 
-This post provides a short experience report about my approach to migrating a [toy project](https://github.com/JonasToth/jt-computing) to the latest features of C++-26.
-Noone depends on the project, I have full control over all aspects and thats why I can just fiddle around and see what works.
-The `GNU` (`gcc`) and `LLVM` (`clang`) implementations of the compiler, standard library and rest support the descibed features as of 2026-05-02.
+This post provides a short experience report about my approach to migrating my [toy project `jt-computing`](https://github.com/JonasToth/jt-computing) to the latest features of C++-26.
+Noone depends on the project,
+I have full control over all aspects and thats why I can just fiddle around and see what works.
+The `GNU` (`gcc`) and `LLVM` (`clang`) implementations of the compiler,
+standard library and the rest of the ecosystem support the described features as of 2026-05-02 in their latest versions.
 
-The project has only one external dependency, `catch2` for tests and benchmarks.
-Converting the toy project to modules hopefully gives me a bit of experience and insights on how to actually do the build definition and basic mechanics that I can later apply to bigger real world projects.
+The project has only one external dependency,
+`catch2` for tests and benchmarks.
+Converting `jt-computing` to modules hopefully gives me a bit of experience and insights on how to actually do the build definition and basic mechanics that I can later apply to bigger real world projects.
 My approach and experience may help you do the same for your toy project or even help with a production code base.
 
 ---
 
 ## Tooling Setup
 
-- `gentoo` and `fedora` => easy to retrieve latest versions of toolchains and tools
-- `cmake-4.3`
-- no issues with `gcc-16`, allowing the introduction of `contracts`
-- `mold-2.40` as linker for `gcc`
-- `nvim` and `clangd` (first managed via `mason`, now managed via system versions)
-- `clang-22` and `clangd-22` as secondary compiler and LSP for code navigation and diagnostics
-- `clang-22` uses the full `LLVM` stack, including `libc++` and `lld` on gentoo
-  - `/etc/portage/package.accept_keywords/development` => enable latest version of LLVM
+I use two systems for coding,
+my desktop PC with [gentoo Linux](https://gentoo.org) for customization and my laptop with [Fedora Linux](https://fedoraproject.org/).
+Both allow me to install very recent version of the necessary programming tools:
+- [`cmake-4.3`](https://cmake.org/)
+- [`gcc-16`](https://gcc.gnu.org)
+- [`mold-2.40`](https://github.com/rui314/mold) as linker for `gcc`
+- [`nvim-0.11`](https://neovim.io/) and [`clangd-22`](https://clangd.llvm.org/)
+- [`clang-22`](https://clang.llvm.org/), using the full LLVM stack, including [`libc++`](https://libcxx.llvm.org/) and [`lld`](https://lld.llvm.org/)
 
+I prefer `gentoo` for the development tasks,
+because it is easier to get the bleeding edge versions of all tools,
+as one can usually install "from git".
+For simpler day-to-day usage of the full LLVM stack,
+I installed `clang` on gentoo with additional [compile time configuration](https://wiki.gentoo.org/wiki/LLVM/Clang) to use LLVM tools by default.
 ```
 # File: /etc/portage/package.accept_keywords/development
 sys-devel/gcc ~amd64
@@ -55,9 +63,8 @@ llvm-runtimes/libunwind ~amd64
 llvm-runtimes/openmp ~amd64
 dev-python/lit ~amd64
 ```
-  - `/etc/portage/package.use/development` => set use flags `default-libcxx default-lld default-compiler-rt` for LLVM components
 ```
-# File: package.use/development
+# File: /etc/portage/package.use/development
 >=llvm-core/clang-common-22 default-libcxx default-lld default-compiler-rt
 >=llvm-core/clang-linker-config-22 default-lld
 >=llvm-runtimes/clang-runtime-22 default-lld default-libcxx default-compiler-rt default-lld
@@ -73,13 +80,16 @@ sys-libs/zlib static-libs
 
 ## Project Layout
 
-- the `cmake` project is separated into components that are in theory installable
-    - `include/` and `lib/` define and implement the library interface
-    - `include/` is structued such that it can be easily installed into a system by just copying the contents to the system headers directory
-    - `test/` is a discrete CMake project that implements unit and integration tests of the `lib/` components using `catch2`
-    - `bin/` separate directory for CLI tools that use `lib/`, in theory compilable independently with system installed `lib/` and `include/` components
-    - `cmake/` contains support code
-    - `build*/` build directories for the various compilers, ignored in `git`
+The repository and project layout was generated from a modern CMake template,
+the original author I forgot (sorry!).
+It is structured as follows:
+- `include/` and `lib/` define and implement the library interface
+- `include/` can be easily installed into a system by just copying the contents to the system headers directory
+- `test/` is a discrete CMake project that implements unit and integration tests of the `lib/` components using `catch2`
+- `bin/` separate directory for CLI tools that use `lib/`,
+  in theory compilable independently with system installed `lib/` and `include/` components
+- `cmake/` contains support code
+- `build*/` build directories for the various compilers, ignored in `git`
 ```bash
 $ tree -L1 bin lib include test
 bin
@@ -87,12 +97,7 @@ bin
 ├── CMakeLists.txt
 ├── collatz_chain.cpp
 ├── find_prime_numbers.cpp
-├── generate_percolation_plot.bash
-├── percolation_power.cpp
-├── plot_graph.gnuplot
-├── sha256sum.cpp
-├── shortest_path.cpp
-└── toy_rsa.cpp
+├── ...
 lib
 ├── container
 ├── core
@@ -103,48 +108,107 @@ include
 test
 ├── CMakeLists.txt
 └── lib
-
 ```
-- the project structure itself works well
-- I would like to redo the cmake definition of it, as I find it imprecise and messy
+The project structure works well and helped me in the transition to modules.
+I would like to redo the cmake definition of it,
+as I find it a bit too verbose and messy.
+Properly installing the project to a system library does not work either and I did not evaluate changes in that respect.
 
 ## Introducing `import std;`
 
-- change C++ standard in CMake project to `C++26`
-- enable experimental support for `import std;` via the `CMAKE_EXPERIMENTAL_CXX_IMPORT_STD` feature gate
-  - lookup the correct value for the gate in the [cmake repo for your version](https://gitlab.kitware.com/cmake/cmake/-/blob/master/Help/dev/experimental.rst?ref_type=heads)
-  - add `set (CMAKE_EXPERIMENTAL_CXX_IMPORT_STD d0edc3af-4c50-42ea-a356-e2862fe7a444)` **BEFORE** your `project()` call in the toplevel `CMakeLists.txt`
-- go through each file and replace all `#include <SOMETHING>` from the STL with a single `import std;`
-- compile and test
+Starting to use `import std;` is mostly a `cmake` change and requires an up-to-date toolchain.
+It is mandatory to use `ninja` as the build system (e.g. with `cmake -B build_dir -S . -G Ninja`).
+The standard must be changed to at least `C++23`,
+I use `C++26` to enable even more features.
+`cmake`'s support for importing the standard library module is experimental and requires setting a feature gate.
+The proper value must be looked up in the [documentation of the corresponding `cmake` version](https://gitlab.kitware.com/cmake/cmake/-/blob/master/Help/dev/experimental.rst?ref_type=heads).
+Note, that the feature gate must be enabled **before** your `project()` call.
+```cmake
+cmake_minimum_required(VERSION 4.2)
+set (CMAKE_EXPERIMENTAL_CXX_IMPORT_STD d0edc3af-4c50-42ea-a356-e2862fe7a444)
 
-### LSP Sidequest
+project("JTComputing" VERSION 0.1.0 LANGUAGES CXX)
 
-- to have the best `clangd` support, I use a `clang` build as the source for my `compile_commands.json`
-- adjusted `clangd` invocation of editor to add the `--experimental-modules-support` flag when started
-- received error messages about mismatching compiler versions when consuming the internal `std.pcm` files from `clangd` resulting in this [bug report](https://bugs.gentoo.org/973221) for gentoo
-- the issue was managing `clangd` via `mason` in `nvim` that includes different VCS information then the `clang` compiler used to build the project
-- _NOTE_: the produced module artifacts of the build are _not_ standardized and need recompilation for each compiler, even between different compiler versions
+set (CMAKE_CXX_STANDARD 26)
+set (CMAKE_CXX_MODULE_STD ON)
+set (CMAKE_CXX_SCAN_FOR_MODULES ON)
+```
+Setting these properties can be done on a per-target basis, too.
+```cmake
+function(jt_compile_setup target)
+    set_target_properties(${target}
+        PROPERTIES
+            CMAKE_CXX_STANDARD cxx_std_26
+            CMAKE_CXX_MODULE_STD ON
+            CMAKE_CXX_SCAN_FOR_MODULES ON
+    )
+endfunction()
+```
+From inspecting the generated build commands,
+it seems that `gcc` requires `GNU` extensions for the standard library module support,
+but I am not aware of the details.
 
-### Tree-Sitter Sidequest
+The following code transformation introduced `import std;`:
+- Perform a project-wide string search for `#include <`, using [`telescope.nvim`](https://github.com/nvim-telescope/telescope.nvim).
+- Highlight each found standard header using `Tab` in the picker and finally open the files in the quick-fix list via `Alt-q`.
+- Cycle through all locations of the quick-fix list via `]q`, remove each standard include and add `import std;` after all `#include` directives.
+- Compile and test.
+    - I had to outcomment or remove a few standard macros like `assert` (see contracts) and `CHAR_BIT`.
+    - I had no issues with C standard library functions used in the global namespace -- you can use `import std.compat;` in these situations.
 
-- the currently released [tree-sitter-cpp](https://github.com/tree-sitter/tree-sitter-cpp) is missing highlight groups for the module keywords (according to `:TSHighlightCapturesUnderCursor`)
-- the project already contains the necessary code, but lacks a release, apparently because the maintainers with that right are inactive [Bug Comment](https://github.com/tree-sitter/tree-sitter-cpp/issues/341#issuecomment-3492960158)
-- I created a fork [JonasToth/tree-sitter-cpp](https://github.com/JonasToth/tree-sitter-cpp), added a `v9999` tag to the latest commit on master
-- use this version in [jonas-overlay](https://github.com/JonasToth/jonas-overlay/blob/751050527dcc1dd5c2af31fe00091b2d8c6d39d7/dev-libs/tree-sitter-cpp/tree-sitter-cpp-9999.ebuild)
-- remove `cpp` from the `nvim` installed parsers
+This process is a good candidate for a `clang-tidy > modernize` check to automate the cumbersome work.
+
+### Code Navigation Sidequest
+
+Using the `gcc` generated `compile_commands.json` with modules lead to warnings about unknown arguments, stemming from modules flags.
+Instead, I maintain a second build directory using the full `LLVM` toolchain and link the `compile_commands.json` from there into my source directory.
+`clangd`'s modules support is still experimental, so it must be started with the `--experimental-modules-support` flag -- adjust your editors LSP setup accordingly.
+After doing so, I received error messages about mismatching compiler versions when consuming the internal `std.pcm` files from `clangd`, resulting in this [bug report](https://bugs.gentoo.org/973221) for gentoo.
+The issue was present on Fedora, too.
+Digging around in the logs, LLVM code base and cmake definition and finally clearing my mind by touching grass I figured the problem out.
+The root cause was managing `clangd` via `mason` in `nvim` that includes different VCS information than the system's `clang` compiler used to build the project.  
+Resolving this issue is of course simple, not doing that.
+It may be a recurring situation though,
+as its quiet common to install `clangd` via your editor's/IDE's packaging instead as part of your system compiler distribution.  
+_NOTE_: the produced module artifacts of the build are _not_ standardized and need recompilation for each compiler,
+even between different compiler versions,
+hence the warning.
+
+### Syntax Highlighting Sidequest
+
+Another `nvim` related issue was syntax highlighting.
+The latest released [tree-sitter-cpp-0.23.4](https://github.com/tree-sitter/tree-sitter-cpp) is missing highlight groups for the module keywords, checked using `:TSHighlightCapturesUnderCursor`.
+The upstream project already contains the necessary code on `master`, but lacks a release.
+Apparently, the maintainers with the power-to-release are currently inactive ([Bug Comment](https://github.com/tree-sitter/tree-sitter-cpp/issues/341#issuecomment-3492960158)).
+I created the fork [JonasToth/tree-sitter-cpp](https://github.com/JonasToth/tree-sitter-cpp) and added a `v9999` tag to the latest commit on master.
+Installation on my system uses my [personal gentoo overlay](https://github.com/JonasToth/jonas-overlay/blob/751050527dcc1dd5c2af31fe00091b2d8c6d39d7/dev-libs/tree-sitter-cpp/tree-sitter-cpp-9999.ebuild):
+- remove `cpp` from the `nvim` installed tree-sitter parsers (and/or `:TSUninstall cpp`)
 - add `dev-libs/tree-sitter-cpp **` to `/etc/portage/package.accept_keywords/development`
-- install `emerge --sync jonas-overlay ; emerge --ask dev-libs/tree-sitter-cpp::jonas-overlay`
+- install by `emerge --sync jonas-overlay ; emerge --ask dev-libs/tree-sitter-cpp::jonas-overlay`
+
+Finally, the code-writing experience is on par with good old header includes.
 
 ## Migration to C++ Modules
 
-- Inspiration from the Blog Posts of [Adrian Bühlmann](https://abuehl.github.io) and additional resources for general knowledge:
-  - [Converting an App to Modules](https://abuehl.github.io/2026/04/26/code-examples-from-an-app-using-modules.html)
-  - [Unneeded Recompilations when using Modules](https://abuehl.github.io/2026/04/20/unneeded-recompilations-when-using-partitions.html)
-  - [C++20 Modules: Best Practices from a User's Perspective](https://chuanqixu9.github.io/c++/2025/12/30/C++20-Modules-Best-Practices.en.html#use-module-implementation-partition-units-not-module-implementation-units-to-implement-interfaces)
-  - [Rubén Pérez's Blog Posts about  Modules](https://anarthal.github.io/cppblog/modules4#clangd-modules)
-- increase `cmake` required version to `4.2`
-- introduce `FILE_SET` in cmake definition of the targets using `target_sources()`
+My approach was inspired from the blog posts of [Adrian Bühlmann](https://abuehl.github.io) and additional resources for module insights:
+- [Converting an App to Modules](https://abuehl.github.io/2026/04/26/code-examples-from-an-app-using-modules.html)
+- [Unneeded Recompilations when using Modules](https://abuehl.github.io/2026/04/20/unneeded-recompilations-when-using-partitions.html)
+- [C++20 Modules: Best Practices from a User's Perspective](https://chuanqixu9.github.io/c++/2025/12/30/C++20-Modules-Best-Practices.en.html#use-module-implementation-partition-units-not-module-implementation-units-to-implement-interfaces)
+- [Rubén Pérez's Blog Posts about Modules](https://anarthal.github.io/cppblog/modules4#clangd-modules)
+
+### High Level Approach
+
+1. Each `lib/` subdirectory becomes a module, e.g. `jt.Math` or `jt.Crypto`.
+1. Each test is _part of the corresponding module_ as an internal partition ([Recommendation from chuanqixu9](https://chuanqixu9.github.io/c++/2025/12/30/C++20-Modules-Best-Practices.en.html#use-module-implementation-partition-units-not-module-implementation-units-to-implement-interfaces))
+1. Individual test cases have a 1-to-1 mapping of file to executable -- this is maintained from the header-based version of the tests.
+1. The `include/` directory becomes obsolete as the project will only consist of `.cpp` and `.cppm` files.
+
+### Technical Implementation
+
+First, the build definition needs to manage source files for executables and libraries via `target_sources()`.
+`cmake` introduced the concept of a [`FILE_SET`](https://cmake.org/cmake/help/latest/command/target_sources.html#file-sets) to support modules.
 ```cmake
+add_library(JTComputing)
 target_sources(JTComputing
     PUBLIC
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
@@ -153,11 +217,7 @@ target_sources(JTComputing
         # ...
 )
 ```
-- made `include/` directory obsolete, project consists only of `.cpp` and `.cppm` files
-- each `lib/` subdirectory becomes a module, e.g. `jt.Math` or `jt.Crypto`
-- each test is _part of the corresponding module_ as a partition and has access to all module interna ([Recommendation from chuanqixu9](https://chuanqixu9.github.io/c++/2025/12/30/C++20-Modules-Best-Practices.en.html#use-module-implementation-partition-units-not-module-implementation-units-to-implement-interfaces))
-- individual test cases have a 1-to-1 mapping of file to executable
-- each test exectuable get a similar `target_source` `FILE_SET` to build them as modules
+Each test exectuable gets a similar `target_sources > FILE_SET` to build the code as module.
 ```cmake
 add_executable(BitVector_Tests)
 target_sources(BitVector_Tests
@@ -182,8 +242,9 @@ add_test(NAME BitVector COMMAND BitVector_Tests)
     - add the `<Component>.cppm` and `<Aspect>.cpp` file to the `FILE_SET` in the cmake project
     - the `<Aspect>.cpp` file exports a module partition matching its name using `export module jt.<Component>:<Aspect>`
     - the partition is added to the `<Component>.cppm` as export using `export import :<Aspect>;`
-    - delete all header includes of `<Aspect.hpp>` and introduce the matching `import jt.<Component>;` if not already present in the user file
-    - in the new module file `<Aspect>.cpp` just export the whole namespace definition using `export namespace jt::<Component>`
+    - delete all header includes of `<Aspect.hpp>` throughout the project and introduce the matching `import jt.<Component>;` if not already present in the user file (this can be done the same way as described for `import std;` above)
+    - export the whole namespace definition using `export namespace jt::<Component>` in the new module file `<Aspect>.cpp`
+    - delete `<Aspect>.hpp` and remove it from the cmake definitions if present
 ```cpp
 // Example of lib/container/Container.cppm
 export import jt.Core;
@@ -216,7 +277,7 @@ public:
 }
 ```
 - for each testcase in `test/`
-    - add the global module fragment to include `catch2` headers
+    - add the global module fragment and include `catch2` headers
     - define a private module partition `module jt.<Component>:Test<Aspect>;`
     - ensure the file is part of the `FILE_SET` for the test executable
 ```cpp
@@ -228,6 +289,7 @@ module;
 module jt.Container:TestBitVector;
 
 import std;
+// This import is necessary!
 import jt.Container;
 
 using namespace std;
@@ -244,32 +306,42 @@ TEST_CASE("BitVector Construction", "") {
 // ...
 ```
 
-- because a `<Component>` module is split into multiple partitions, the partitions may need additional `import :<OtherAspect>` imports internally to have all dependent components available
-- the whole conversion requires repeated compilations and fixing of errors, missing definitions and similar fixes
-- try to perform the conversion `<Component>` wise mixing includes in the global module fragment with imports until, having a compiling state after each `<Component>`
-- if the project is small enough, this can be done in one sessions and all parts are modularized at once
-- the module structure of the project finally mirrors the previous header/implementation structure
-- the modularized structure can now be adjusted further to work well and follow current best practices
+### Hindsight and Learnings
+
+- Because a `<Component>` module is split into multiple partitions,
+  the individual partitions may need additional `import :<OtherAspect>` imports internally to have all dependent components available.
+- Try to perform the conversion `<Component>` wise, mixing includes in the global module fragment with imports until having a compiling state after each `<Component>`.
+- Containing all code in `namespace`s made the `export` trivial.
+- If the project is small enough, the conversion can be done in one sessions.
+- The module structure of the project finally mirrors the previous header/implementation structure -- I like this property because refactorings and migrations can be sequenced with well defined inbetween states.
+- The fully modularized structure can be adjusted further and follow current best practices:
     - breaking up build time dependencies by splitting interface and implementation into separate `.cpp` file ([Cpp Files to Break Build-Dependencies](https://abuehl.github.io/2026/04/23/cpp-files-still-help-breaking-dependencies.html))
     - improving the partition structure and potentially reducing the number of partitions
-    - reducing the exported interface by selectively export classes and functions instead of the whole namespace in each file
+    - reducing the exported interface by selectively exporting classes and functions instead of the whole namespace in each file
+- You are free to reshuffle all file related aspects of your code within a single module without breaking the module user.
 
 ### Convert to `using namespace std;` everywhere
 
 Once the code base is fully modularized it is possible to use `using namespace std;` everywhere and have it as a default.
-Because there is no textual header inclusion the `using` directive doesn't bleed into other headers and implementations.
-Just add this line after each `import std;` or to other `using namespace ...;` sections already existing.
+Because there is no textual header inclusion, the `using` directive doesn't bleed into other headers and implementations.
+Just add `using namespace std;` after each `import std;` or to other `using namespace ...;` sections already present.
 Then perform a textual replacement of `'std::' => ''` and fix compiler errors.
 
 ## Using C++ Contracts
 
-- the project already use `assert();` to state invariants and pre/post conditions
-- conversion of the macro based `assert()` to contracts was done after the modularization
-- during the modularization, the `assert()` macros where commented out, because `import std;` does not provide the `assert()` macro
-- C++26 contracts are only supported by `gcc-16`, so conditional compilation required to still support `clang` for now
-- this is easiest done via macros that are `#include`d
-- added in `include/jt-computing/core/Contracts.hpp` and included in the global module fragment of users
+Starting point for contract assertions in the code base was the good old `assert();` macro, already used to state pre/post conditions and invariants.
+The modularized code base _could not use_ `assert()` anymore, because `import std;` does not export macros.
+Of course it would be possible to add `#include <cassert>` in the global module fragment, but given the small code size, temporary outcommenting `assert()` worked better.
+
+`gcc-16` is currently the only shipping compiler with contracts support, so I decided to use macros after all to still compile with `clang`.
+The following steps enabled contracts:
+- reintroduce `include/` and add `include/jt-computing/core/Contracts.hpp`, included in the global module fragment of contracts users
+- pass [`-fcontracts`](https://gcc.gnu.org/onlinedocs/gcc-16.1.0/gcc/C_002b_002b-Dialect-Options.html#index-fcontracts) and [`-fcontract-evaluation-semantic=enforce`](https://gcc.gnu.org/onlinedocs/gcc-16.1.0/gcc/C_002b_002b-Dialect-Options.html#index-fcontract-evaluation-semantic) to `gcc` through quick-and-dirty extension of the `target_compile_options()` and `target_link_options()` in `cmake`
+
+I expect future releases of `cmake` to expose the evaluation semantic through typical target properties and invoke the compiler correctly if `C++26` is the target standard.
+The assertion macros just pass through to the proper contracts keywords.
 ```cpp
+// File: include/jt-computing/core/Contracts.hpp
 #pragma once
 
 #ifdef __clang__
@@ -282,9 +354,8 @@ Then perform a textual replacement of `'std::' => ''` and fix compiler errors.
 #  define CONTRACT_ASSERT(...) contract_assert(__VA_ARGS__)
 #endif
 ```
-- users of the contracts need to do the following
 ```cpp
-// EXAMPLE for normal consumer that does not define a module.
+// Example include for normal consumer that does not define a module.
 #include "jt-computing/core/Contracts.hpp"
 
 import std;
@@ -298,8 +369,8 @@ public:
 // ...
 
 ```
-- if used in a module defintion or implementation, the global module fragment must be defined
 ```cpp
+// Example include for a module using the contract macros.
 module;
 
 #include "jt-computing/core/Contracts.hpp"
@@ -308,18 +379,20 @@ export module jt.Container:BitVector;
 
 // ...
 ```
+Once `clang` supports contracts, the macros will disappear again using simple search-and-replace.
 
 ## Quick and Dirty Build-Time Comparison
 
-- not the most scientific measurements, but you get a feeling
-- again, this is a toy project, it already compiled quiet fast due to limited extent ;)
+A C++ post requires time measurements, so lets measure compile times of clean builds.
+Please note, this is still a toy project.
+I don't want you to make definite conclusions from these results.
+Only `gcc-16` together with `mold-2.40` and `libstdc++` is measured!
 
 ### Header-based Project
 
-- based on the branch `jt-computing-old` at `3fb47bb32d36aad15943bf82bb64fac1f0901eac`
-- compile `Catch2` outside of the measurement and take 3 measurements
-- `gcc-16` and `mold`
-- disabled module scanning and `import std;` is not in effect
+The old header based project revision is tracked on the branch `jt-computing-old` at `3fb47bb32d36aad15943bf82bb64fac1f0901eac`.
+I had to backport minor changes to the build definition to consume `Catch2` via `FetchContent` and don't perform module scanning.
+Building `Catch2` is done independently and in total 3 clean builds were measured.
 ```bash
 $ cmake \
     --fresh \
@@ -328,9 +401,13 @@ $ cmake \
     -G Ninja \
     -DCMAKE_LINKER_TYPE=MOLD \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
-$ cmake --build build_timed --target clean
-$ cmake --build build_timed --target Catch2 Catch2WithMain
-$ time cmake --build build_timed -- -j<Cores>
+$ function measure() {
+     cmake --build build_timed --target clean
+     cmake --build build_timed --target Catch2 Catch2WithMain
+     time cmake --build build_timed -- -j${1}
+}
+$ measure 8  # 3 times
+$ measure 32 # 3 times
 > ...
 > [82/82] Linking CXX executable bin/percolation_power.x
 ```
@@ -342,21 +419,11 @@ $ time cmake --build build_timed -- -j<Cores>
 
 ### Module-based Project
 
-- based on the `master` branch at `bbc4900b28f07e8d516566bb49008968ce7ad86f`
-- again, compile `Catch2` 
-- again `gcc-16` and `mold`
-- includes modules scanning and building of the standard library module
+The modules and contracts based revision is on `master` at `bbc4900b28f07e8d516566bb49008968ce7ad86f`
+Building performs module scanning and producing the standard library module.
 ```bash
-$ cmake \
-    --fresh \
-    -B build_timed \
-    -S . \
-    -G Ninja \
-    -DCMAKE_LINKER_TYPE=MOLD \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo
-$ cmake --build build_timed --target clean
-$ cmake --build build_timed --target Catch2 Catch2WithMain
-$ time cmake --build build_timed -- -j<Cores>
+$ measure 8  # 3 times
+$ measure 32 # 3 times
 > ...
 > [117/117] Linking CXX executable bin/percolation_power.x
 ```
@@ -369,13 +436,34 @@ $ time cmake --build build_timed -- -j<Cores>
 Sadly, the modules version performs slower clean builds.
 Happily I don't have a lot of time to increase the size of the project, so its fast to build anyway /s.
 
+In all seriousness, I am surprised to see the significant increase in compile time.
+The build takes `35` steps more due to scanning for module definitions before acutal compilation happens.
+Maybe the regression is related to my decision of having the tests as part of the modules.
+I want to revisit this point and see, if I can improve the build speed by adjusting my module structure.
+
+Measuring incremental builds may restore the module's honor, but I want to finish the blog post 😅.
+The incremental builds feel quiet fast and I suspect _not_ building the standard library module makes a big difference.
+Incremental builds of the project suffer from unnecessary build time dependencies from the module structure.
+With a bit more experience and optimization, I want to remeasure, including incremental builds.
+
 ## Conclusion
 
-- migration was easier than I thought
-- I read a lot about modules to keep up to date but was honestly confused by the new words I had no real world connection to
-- now I have a clearer picture on what the different aspects of modules mean and how they interact with each other
-- a migration of a bigger project seems achievable as long as the code is already "modularized" in spirit
-- it seems most profitable to start with the foundational components or libraries of a bigger project and convert in multiple sequential transformations
-- `clangd` support for modules is as important as compiler support to not regress into "toolless development"
-- syntax highlighting for modules and exports is not correct in `nvim` but I consider it a minor issue
-- it seems that the whole development ecosystem I use slowly adopts modules, but its not plug-and-play with the desired developer experience
+The migration was easier than I thought but harder than I hoped.
+As you might imagine, the time consuming part was adjusting all the tooling, versions and libraries to have a good experience.
+Finally changing the code was quiet fast.
+
+I read about modules over the years to keep up to date but was honestly confused by the "new words" I had no connection to, like global module fragment.
+The conversion gave me a clearer picture on what the different aspects of modules mean and how they interact with each other.
+A migration of a bigger project seems achievable as long as the code is already "modularized" in spirit.
+If I had to migrate a production code base, I would start with the foundational components and perform multiple end-to-end transformations the way I described above.
+Quick-and-dirty `python` scripts would likely suffice to perform the bulk of the changes with manual interventions and fixups to keep the code compiling.
+`clang-tidy` based introduction of `import std;` seems possible, maybe I can renew my rusty `clang-tidy` knowledge and hack on that a bit.
+
+In my opinion, `clangd` support for modules is as important as compiler support to not regress into "toolless development".
+The syntax highlighting issues in `nvim` are an annoyance, eventually resolved.
+I am glad to see that the whole development ecosystem adopts modules and hope for acceleration with `gcc-16` providing better support.
+
+Removing `std::` everywhere improved readability and is a welcome change to C++.
+I am looking forward to not remember header names and accidentally missing includes that lead to compiler errors after toolchain updates.
+
+Thank you for your effort to everyone involved in the continued evolution of C++ and its tools!

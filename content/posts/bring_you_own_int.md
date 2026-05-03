@@ -5,7 +5,6 @@ date = 2024-05-11T14:30:00+02:00
 type = 'post'
 tags = ["curiositas", "numbers", "math", "cpp"]
 showTableOfContents = false
-weight = 1
 +++
 <p class="book-button">
     <a target="_blank" href="https://curiositasbooks.gumroad.com/l/build-your-own-int">Get the Book</a>
